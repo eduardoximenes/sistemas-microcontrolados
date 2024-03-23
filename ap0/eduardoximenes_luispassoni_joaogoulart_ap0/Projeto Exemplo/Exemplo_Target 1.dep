@@ -1,0 +1,4 @@
+Dependencies for Project 'Exemplo', Target 'Target 1': (DO NOT MODIFY !)
+CompilerVersion: 6210000::V6.21::ARMCLANG
+F (.\exemplo.s)(0x65FA1A80)(--target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4 -Wa,armasm,--pd,"__EVAL SETA 1"-IC:/Users/User/AppData/Local/Arm/Packs/Keil/TM4C_DFP/1.1.0/Device/Include/TM4C129-Wa,armasm,--pd,"__UVISION_VERSION SETA 539" -Wa,armasm,--pd,"TM4C1294NCPDT SETA 1"-o ./exemplo.o)
+F (.\startup.s)(0x615E4B84)(--target=arm-arm-none-eabi -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c-gdwarf-4 -Wa,armasm,--pd,"__EVAL SETA 1"-IC:/Users/User/AppData/Local/Arm/Packs/Keil/TM4C_DFP/1.1.0/Device/Include/TM4C129-Wa,armasm,--pd,"__UVISION_VERSION SETA 539" -Wa,armasm,--pd,"TM4C1294NCPDT SETA 1"-o ./startup.o)
