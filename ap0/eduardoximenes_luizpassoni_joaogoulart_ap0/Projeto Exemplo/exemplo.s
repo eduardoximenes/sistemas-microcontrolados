@@ -45,9 +45,7 @@ Start
 ; 3, 244, 14, 233, 1, 6, 9, 18, 13, 254, 21, 34, 2, 67, 135,  8, 89, 43, 5, 105, 144, 201, 55
 
 	LDR R0, =INITIAL_LIST
-	LDR R1, =FIBONACCI_LIST
-	MOV R9, #0;		STORES FIBONACCI LIST SIZE
-
+	
 	MOV R2, #3
 	STRB R2, [R0], #1
 	MOV R2, #244
@@ -95,8 +93,10 @@ Start
 	MOV R2, #55
 	STRB R2, [R0], #1
 	
-	MOV R6, R0
+	MOV R6, R0;				Store where the list ends
 	LDR R0, =INITIAL_LIST;	Sets R0 pointer to head of list 
+	LDR R1, =FIBONACCI_LIST
+	MOV R9, #0;				Store fibonacci list size
 	
 main_loop
 	LDRB R3, [R0];		Select next element on the list, loads to R3
