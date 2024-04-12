@@ -1,0 +1,336 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ; main.s
+    2 00000000         ; Desenvolvido para a placa EK-TM4C1294XL
+    3 00000000         ; Prof. Guilherme Peron
+    4 00000000         ; 24/08/2020
+    5 00000000         ; Este programa espera o usuário apertar a chave USR_SW1
+                       .
+    6 00000000         ; Caso o usuário pressione a chave, o LED1 piscará a cad
+                       a 0,5 segundo.
+    7 00000000         
+    8 00000000         ; ------------------------------------------------------
+                       -------------------------
+    9 00000000                 THUMB                        ; Instruções do tip
+                                                            o Thumb-2
+   10 00000000         ; ------------------------------------------------------
+                       -------------------------
+   11 00000000         
+   12 00000000         ; Declarações EQU - Defines
+   13 00000000         ;<NOME>         EQU <VALOR>
+   14 00000000         ; ========================
+   15 00000000         
+   16 00000000         ; ------------------------------------------------------
+                       -------------------------
+   17 00000000         ; Área de Dados - Declarações de variáveis
+   18 00000000                 AREA             DATA, ALIGN=2
+   19 00000000         ; Se alguma variável for chamada em outro arquivo
+   20 00000000         ;EXPORT  <var> [DATA,SIZE=<tam>]   ; Permite chamar a va
+                       riável <var> a 
+   21 00000000         ; partir de outro arquivo
+   22 00000000         ;<var> SPACE <tam>                        ; Declara uma 
+                       variável de nome <var>
+   23 00000000         ; de <tam> bytes a partir da primeira 
+   24 00000000         ; posição da RAM  
+   25 00000000         
+   26 00000000         ; ------------------------------------------------------
+                       -------------------------
+   27 00000000         ; Área de Código - Tudo abaixo da diretiva a seguir será
+                        armazenado na memória de 
+   28 00000000         ;                  código
+   29 00000000                 AREA             |.text|, CODE, READONLY, ALIGN=
+2
+   30 00000000         
+   31 00000000         ; Se alguma função do arquivo for chamada em outro arqui
+                       vo 
+   32 00000000                 EXPORT           Start       ; Permite chamar a 
+                                                            função Start a part
+                                                            ir de 
+   33 00000000         ; outro arquivo. No caso startup.s
+   34 00000000         
+   35 00000000         ; Se chamar alguma função externa 
+   36 00000000         ;IMPORT <func>              ; Permite chamar dentro dest
+                       e arquivo uma 
+   37 00000000         ; função <func>
+   38 00000000                 IMPORT           PLL_Init
+   39 00000000                 IMPORT           SysTick_Init
+   40 00000000                 IMPORT           SysTick_Wait1ms
+   41 00000000                 IMPORT           GPIO_Init
+   42 00000000         
+   43 00000000                 IMPORT           PortJ_Input ; Porta J - SW1 e S
+                                                            W2
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   44 00000000                 IMPORT           PortQ_Output ; Porta Q - Q0:Q3 
+                                                            - Leds e Display 
+   45 00000000                 IMPORT           PortA_Output ; Porta A - A4:Q7 
+                                                            - Leds e Display 
+   46 00000000                 IMPORT           PortB_Output ; Porta B - B4:B5 
+                                                            - Transistor dos di
+                                                            splays
+   47 00000000                 IMPORT           PortP_Output ; Porta P - P5    
+                                                            - Transistor dos le
+                                                            ds
+   48 00000000         
+   49 00000000         ; ------------------------------------------------------
+                       -------------------------
+   50 00000000         ; Função main()
+   51 00000000         Start
+   52 00000000 F7FF FFFE       BL               PLL_Init    ;Chama a subrotina 
+                                                            para alterar o cloc
+                                                            k do microcontrolad
+                                                            or para 80MHz
+   53 00000004 F7FF FFFE       BL               SysTick_Init
+   54 00000008 F7FF FFFE       BL               GPIO_Init   ;Chama a subrotina 
+                                                            que inicializa os G
+                                                            PIO
+   55 0000000C         
+   56 0000000C         MainLoop
+   57 0000000C F7FF FFFE       BL               PortJ_Input ;Chama a subrotina 
+                                                            que lê o estado das
+                                                             chaves e coloca o 
+                                                            resultado em R0
+   58 00000010         Verifica_Nenhuma
+   59 00000010 2801            CMP              R0, #2_00000001 ;Verifica se ne
+                                                            nhuma chave está pr
+                                                            essionada
+   60 00000012 D102            BNE              Verifica_SW1 ;Se o teste viu qu
+                                                            e tem pelo menos al
+                                                            guma chave pression
+                                                            ada pula
+   61 00000014 F04F 0000       MOV              R0, #0      ;Não acender nenhum
+                                                             LED
+   62 00000018         ;BL PortN_Output      ;Chamar a função para não acender 
+                       nenhum LED
+   63 00000018 E7F8            B                MainLoop    ;Se o teste viu que
+                                                             nenhuma chave está
+                                                             pressionada, volta
+                                                             para o laço princi
+                                                            pal
+   64 0000001A         Verifica_SW1
+   65 0000001A 2800            CMP              R0, #2_00000000 ;Verifica se so
+                                                            mente a chave SW1 e
+                                                            stá pressionada
+   66 0000001C D1F6            BNE              MainLoop    ;Se o teste falhou,
+                                                             volta para o iníci
+                                                            o do laço principal
+                                                            
+   67 0000001E F000 F801       BL               Pisca_LED   ;Chama a rotina par
+                                                            a piscar LED
+   68 00000022 E7F3            B                MainLoop    ;Volta para o laço 
+                                                            principal
+   69 00000024         
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   70 00000024         ;-------------------------------------------------------
+                       -------------------------
+   71 00000024         ; Função Pisca_LED
+   72 00000024         ; Parâmetro de entrada: Não tem
+   73 00000024         ; Parâmetro de saída: Não tem
+   74 00000024         Pisca_LED
+   75 00000024 F04F 0002       MOV              R0, #2_10   ;Setar o parâmetro 
+                                                            de entrada da funçã
+                                                            o setando o BIT1
+   76 00000028 B500            PUSH             {LR}
+   77 0000002A         ;BL PortN_Output     ;Chamar a função para acender o LED
+                       1
+   78 0000002A F44F 70FA       MOV              R0, #500    ;Chamar a rotina pa
+                                                            ra esperar 0,5s
+   79 0000002E F7FF FFFE       BL               SysTick_Wait1ms
+   80 00000032 F04F 0000       MOV              R0, #0      ;Setar o parâmetro 
+                                                            de entrada da funçã
+                                                            o apagando o BIT1
+   81 00000036         ;BL PortN_Output     ;Chamar a rotina para apagar o LED
+   82 00000036 F44F 70FA       MOV              R0, #500    ;Chamar a rotina pa
+                                                            ra esperar 0,5
+   83 0000003A F7FF FFFE       BL               SysTick_Wait1ms
+   84 0000003E F85D EB04       POP              {LR}
+   85 00000042 4770            BX               LR          ;return
+   86 00000044         
+   87 00000044         ; ------------------------------------------------------
+                       --------------------------------------------------------
+                       -----------
+   88 00000044         ; Fim do Arquivo
+   89 00000044         ; ------------------------------------------------------
+                       --------------------------------------------------------
+                       ----------- 
+   90 00000044                 ALIGN                        ;Garante que o fim 
+                                                            da seção está alinh
+                                                            ada 
+   91 00000044                 END                          ;Fim do arquivo
+Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
+--depend=.\objects\main.d -o.\objects\main.o -IC:\Users\User\AppData\Local\Arm\
+Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C129 --predefine="__EVAL SETA 1" --
+predefine="__UVISION_VERSION SETA 539" --predefine="TM4C1294NCPDT SETA 1" --lis
+t=.\listings\main.lst main.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+DATA 00000000
+
+Symbol: DATA
+   Definitions
+      At line 18 in file main.s
+   Uses
+      None
+Comment: DATA unused
+1 symbol
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 29 in file main.s
+   Uses
+      None
+Comment: .text unused
+MainLoop 0000000C
+
+Symbol: MainLoop
+   Definitions
+      At line 56 in file main.s
+   Uses
+      At line 63 in file main.s
+      At line 66 in file main.s
+      At line 68 in file main.s
+
+Pisca_LED 00000024
+
+Symbol: Pisca_LED
+   Definitions
+      At line 74 in file main.s
+   Uses
+      At line 67 in file main.s
+Comment: Pisca_LED used once
+Start 00000000
+
+Symbol: Start
+   Definitions
+      At line 51 in file main.s
+   Uses
+      At line 32 in file main.s
+Comment: Start used once
+Verifica_Nenhuma 00000010
+
+Symbol: Verifica_Nenhuma
+   Definitions
+      At line 58 in file main.s
+   Uses
+      None
+Comment: Verifica_Nenhuma unused
+Verifica_SW1 0000001A
+
+Symbol: Verifica_SW1
+   Definitions
+      At line 64 in file main.s
+   Uses
+      At line 60 in file main.s
+Comment: Verifica_SW1 used once
+6 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+GPIO_Init 00000000
+
+Symbol: GPIO_Init
+   Definitions
+      At line 41 in file main.s
+   Uses
+      At line 54 in file main.s
+Comment: GPIO_Init used once
+PLL_Init 00000000
+
+Symbol: PLL_Init
+   Definitions
+      At line 38 in file main.s
+   Uses
+      At line 52 in file main.s
+Comment: PLL_Init used once
+PortA_Output 00000000
+
+Symbol: PortA_Output
+   Definitions
+      At line 45 in file main.s
+   Uses
+      None
+Comment: PortA_Output unused
+PortB_Output 00000000
+
+Symbol: PortB_Output
+   Definitions
+      At line 46 in file main.s
+   Uses
+      None
+Comment: PortB_Output unused
+PortJ_Input 00000000
+
+Symbol: PortJ_Input
+   Definitions
+      At line 43 in file main.s
+   Uses
+      At line 57 in file main.s
+Comment: PortJ_Input used once
+PortP_Output 00000000
+
+Symbol: PortP_Output
+   Definitions
+      At line 47 in file main.s
+   Uses
+      None
+Comment: PortP_Output unused
+PortQ_Output 00000000
+
+Symbol: PortQ_Output
+   Definitions
+      At line 44 in file main.s
+   Uses
+      None
+Comment: PortQ_Output unused
+SysTick_Init 00000000
+
+Symbol: SysTick_Init
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+   Definitions
+      At line 39 in file main.s
+   Uses
+      At line 53 in file main.s
+Comment: SysTick_Init used once
+SysTick_Wait1ms 00000000
+
+Symbol: SysTick_Wait1ms
+   Definitions
+      At line 40 in file main.s
+   Uses
+      At line 79 in file main.s
+      At line 83 in file main.s
+
+9 symbols
+350 symbols in table
