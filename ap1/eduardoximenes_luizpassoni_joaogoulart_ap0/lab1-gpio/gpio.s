@@ -4,19 +4,19 @@
 ; 24/08/2020
 
 ; -------------------------------------------------------------------------------
-        THUMB                        ; Instruções do tipo Thumb-2
+        THUMB                        ; InstruÃ§Ãµes do tipo Thumb-2
 ; -------------------------------------------------------------------------------
-; Declarações EQU - Defines
+; DeclaraÃ§Ãµes EQU - Defines
 ; ========================
-; Definições de Valores
+; DefiniÃ§Ãµes de Valores
 BIT0	EQU 2_0001
 BIT1	EQU 2_0010
 ; ========================
-; Definições dos Registradores Gerais
+; Definiï¿½ï¿½es dos Registradores Gerais
 SYSCTL_RCGCGPIO_R	 EQU	0x400FE608
 SYSCTL_PRGPIO_R		 EQU    0x400FEA08
 ; ========================
-; Definições dos Ports
+; Definiï¿½ï¿½es dos Ports
 
 	
 ; PORT A
@@ -87,28 +87,28 @@ GPIO_PORTQ               	EQU    2_100000000000000 ; SYSCTL_PPGPIO_P14
 
 
 ; -------------------------------------------------------------------------------
-; Área de Código - Tudo abaixo da diretiva a seguir será armazenado na memória de 
-;                  código
+; ï¿½rea de Cï¿½digo - Tudo abaixo da diretiva a seguir serï¿½ armazenado na memï¿½ria de 
+;                  cï¿½digo
         AREA    |.text|, CODE, READONLY, ALIGN=2
 
-		; Se alguma função do arquivo for chamada em outro arquivo	
+		; Se alguma funÃ§Ã£o do arquivo for chamada em outro arquivo	
         EXPORT GPIO_Init            ; Permite chamar GPIO_Init de outro arquivo
 		EXPORT PortJ_Input          ; Permite chamar PortJ_Input de outro arquivo
 		EXPORT PortQ_Output			; Permite chamar PortQ_Output de outro arquivo
 		EXPORT PortA_Output			; Permite chamar PortA_Output de outro arquivo
-		EXPORT PortP_Input          ; Permite chamar PortP_Input de outro arquivo
-		EXPORT PortB_Input          ; Permite chamar PortB_Input de outro arquivo
+		EXPORT PortP_Output          ; Permite chamar PortP_Input de outro arquivo
+		EXPORT PortB_Output          ; Permite chamar PortB_Input de outro arquivo
 
 									
 
 ;--------------------------------------------------------------------------------
-; Função GPIO_Init
-; Parâmetro de entrada: Não tem
-; Parâmetro de saída: Não tem
+; FunÃ§Ã£o GPIO_Init
+; ParÃ¢metro de entrada: NÃ£o tem
+; ParÃ¢metro de saÃ­da: NÃ£o tem
 GPIO_Init
 ;=====================
 ; 1. Ativar o clock para a porta setando o bit correspondente no registrador RCGCGPIO,
-; após isso verificar no PRGPIO se a porta está pronta para uso.
+; apï¿½s isso verificar no PRGPIO se a porta estï¿½ pronta para uso.
 ; enable clock to GPIOF at clock gating register
 			LDR     R0, =SYSCTL_RCGCGPIO_R  		; Carrega o endere?o do registrador RCGCGPIO
 			MOV		R1, #GPIO_PORTA                 ; Seta o bit da porta A
@@ -116,7 +116,7 @@ GPIO_Init
 			ORR     R1, #GPIO_PORTJ					; Seta o bit da porta J, fazendo com OR
 			ORR     R1, #GPIO_PORTP					; Seta o bit da porta P, fazendo com OR
 			ORR     R1, #GPIO_PORTQ					; Seta o bit da porta Q, fazendo com OR
-			STR     R1, [R0]						; Move para a memória os bits das portas no endereço do RCGCGPIO
+			STR     R1, [R0]						; Move para a memï¿½ria os bits das portas no endereï¿½o do RCGCGPIO
  
             LDR     R0, =SYSCTL_PRGPIO_R			; Carrega o endere?o do PRGPIO para esperar os GPIO ficarem prontos
 EsperaGPIO  LDR     R1, [R0]						; L? da mem?ria o conte?do do endere?o do registrador
@@ -126,7 +126,7 @@ EsperaGPIO  LDR     R1, [R0]						; L? da mem?ria o conte?do do endere?o do regi
 			ORR     R2, #GPIO_PORTP                 ; Seta o bit da porta P, fazendo com OR
 			ORR     R2, #GPIO_PORTQ                 ; Seta o bit da porta Q, fazendo com OR
 			TST     R1, R2							; Testa o R1 com R2 fazendo R1 & R2
-			BEQ     EsperaGPIO					    ; Se o flag Z=1, volta para o laço. Senão continua executando
+			BEQ     EsperaGPIO					    ; Se o flag Z=1, volta para o laï¿½o. SenÃ£o continua executando
  
 ; 2. Limpar o AMSEL para desabilitar a anal?gica
             MOV     R1, #0x00						; Colocar 0 no registrador para desabilitar a fun??o anal?gica
@@ -204,7 +204,7 @@ EsperaGPIO  LDR     R1, [R0]						; L? da mem?ria o conte?do do endere?o do regi
             STR     R1, [R0]                        ; Escreve na porta
 			
 ; 6. Setar os bits de DEN para habilitar I/O digital
-			; Escrita amigável - Read-modify-write
+			; Escrita amigï¿½vel - Read-modify-write
 			LDR     R0, =GPIO_PORTA_AHB_DEN_R		; Carrega o endere?o do DEN
 			LDR     R1, [R0]						; L? para carregar o valor anterior da porta inteira
             ORR     R1, R1, #2_11110000             ; Faz o OR bit a bit para manter os valores anteriores e setar somente PA7:PA4
@@ -237,28 +237,67 @@ EsperaGPIO  LDR     R1, [R0]						; L? da mem?ria o conte?do do endere?o do regi
 			BX      LR
 			
 ; -------------------------------------------------------------------------------
-; Função PortN_Output
-; Parâmetro de entrada: R0 --> se o BIT1 está ligado ou desligado
-; Parâmetro de saída: Não tem
-PortN_Output
-	LDR	R1, =GPIO_PORTN_DATA_R		    ;Carrega o valor do offset do data register
-	;Read-Modify-Write para escrita
-	LDR R2, [R1]
-	BIC R2, #2_00000010                     ;Primeiro limpamos os dois bits do lido da porta R2 = R2 & 11111101
-	ORR R0, R0, R2                          ;Fazer o OR do lido pela porta com o parâmetro de entrada
-	STR R0, [R1]                            ;Escreve na porta N o barramento de dados do pino N1
+; FunÃ§Ã£o PortJ_Input
+; ParÃ¢metro de entrada: NÃ£o tem
+; ParÃ¢metro de saÃ­da: R0 --> o valor da leitura
+PortJ_Input
+	LDR	R1, =GPIO_PORTJ_AHB_DATA_R		    ;Carrega o valor do offset do data register
+	LDR R0, [R1]                            ;Lï¿½ no barramento de dados dos pinos [J0]
 	BX LR									;Retorno
 
 ; -------------------------------------------------------------------------------
-; Função PortJ_Input
-; Parâmetro de entrada: Não tem
-; Parâmetro de saída: R0 --> o valor da leitura
-PortJ_Input
-	LDR	R1, =GPIO_PORTJ_AHB_DATA_R		    ;Carrega o valor do offset do data register
-	LDR R0, [R1]                            ;Lê no barramento de dados dos pinos [J0]
+; FunÃ§Ã£o PortQ_Output
+; ParÃ¢metro de entrada: R0 --> setar o Q0:Q3 para acender o display ou o led
+; ParÃ¢metro de saÃ­da: NÃ£o tem
+PortQ_Output
+	LDR	R1, =GPIO_PORTQ_DATA_R		    	;Carrega o valor do offset do data register
+	;Read-Modify-Write para escrita
+	LDR R2, [R1]
+	BIC R2, #2_00001111                     ;Primeiro limpamos os quatros primeiros bits lido da porta R2 = R2 & 11110000
+	ORR R0, R0, R2                          ;Fazer o OR do lido pela porta com o parÃ¢metro de entrada
+	STR R0, [R1]                            ;Escreve na porta Q o barramento de dados do pino 
 	BX LR									;Retorno
 
+; -------------------------------------------------------------------------------
+; FunÃ§Ã£o PortA_Output
+; ParÃ¢metro de entrada: R0 --> setar o P4:P7 para acender o display ou o led
+; ParÃ¢metro de saÃ­da: NÃ£o tem
+PortA_Output
+	LDR	R1, =GPIO_PORTA_AHB_DATA_R		    	;Carrega o valor do offset do data register
+	;Read-Modify-Write para escrita
+	LDR R2, [R1]
+	BIC R2, #2_11110000                    	;Primeiro limpamos os dois bits do lido da porta R2 = R2 & 00001111
+	ORR R0, R0, R2                          ;Fazer o OR do lido pela porta com o parÃ¢metro de entrada
+	STR R0, [R1]                            ;Escreve na porta Q o barramento de dados do pino 
+	BX LR									;Retorno
 
+; -------------------------------------------------------------------------------
+; FunÃ§Ã£o PortP_Output
+; FunÃ§Ã£o responsÃ¡vel por LIGAR ou DESLIGAR o transistor P5
+; ParÃ¢metro de entrada: R0 --> se o P5 estÃ¡ ligado ou desligado
+; ParÃ¢metro de saÃ­da: NÃ£o tem
+PortP_Output
+	LDR	R1, =GPIO_PORTP_DATA_R		    	;Carrega o valor do offset do data register
+	;Read-Modify-Write para escrita
+	LDR R2, [R1]
+	BIC R2, #2_00100000                    	;Primeiro limpamos os dois bits do lido da porta R2 = R2 & 11011111
+	ORR R0, R0, R2                          ;Fazer o OR do lido pela porta com o parÃ¢metro de entrada
+	STR R0, [R1]                            ;Escreve na porta Q o barramento de dados do pino 
+	BX LR									;Retorno
 
-    ALIGN                           ; garante que o fim da seção está alinhada 
+; -------------------------------------------------------------------------------
+; FunÃ§Ã£o PortB_Output
+; FunÃ§Ã£o responsÃ¡vel por LIGAR ou DESLIGAR o transistor B4 ou B5
+; ParÃ¢metro de entrada: R0 --> se o B4 ou B5 estÃ¡ ligado ou desligado
+; ParÃ¢metro de saÃ­da: NÃ£o tem
+PortB_Output
+	LDR	R1, =GPIO_PORTB_AHB_DATA_R		    	;Carrega o valor do offset do data register
+	;Read-Modify-Write para escrita
+	LDR R2, [R1]
+	BIC R2, #2_00110000                    ;Primeiro limpamos os dois bits B4 E B5 lido da porta, R2 = R2 & 11001111
+	ORR R0, R0, R2                          ;Fazer o OR do lido pela porta com o parÃ¢metro de entrada
+	STR R0, [R1]                            ;Escreve na porta Q o barramento de dados do pino 
+	BX LR									;Retorno
+
+    ALIGN                           ; garante que o fim da seï¿½ï¿½o estï¿½ alinhada 
     END                             ; fim do arquivo
