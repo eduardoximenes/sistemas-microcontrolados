@@ -1,0 +1,667 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ; main.s
+    2 00000000         ; Desenvolvido para a placa EK-TM4C1294XL
+    3 00000000         ; Prof. Guilherme Peron
+    4 00000000         ; 24/08/2020
+    5 00000000         ; Este programa espera o usu�rio apertar a chave USR_S
+                       W1.
+    6 00000000         ; Caso o usu�rio pressione a chave, o LED1 piscar� a
+                        cada 0,5 segundo.
+    7 00000000         
+    8 00000000         ; ------------------------------------------------------
+                       -------------------------
+    9 00000000                 THUMB                        ; Instru��es do
+                                                             tipo Thumb-2
+   10 00000000         ; ------------------------------------------------------
+                       -------------------------
+   11 00000000         
+   12 00000000         ; Declara��es EQU - Defines
+   13 00000000         ;<NOME>         EQU <VALOR>
+   14 00000000         ; ========================
+   15 00000000         
+   16 00000000         ; ------------------------------------------------------
+                       -------------------------
+   17 00000000         ; �rea de Dados - Declara��es de vari�veis
+   18 00000000                 AREA             DATA, ALIGN=2
+   19 00000000         ; Se alguma vari�vel for chamada em outro arquivo
+   20 00000000         ;EXPORT  <var> [DATA,SIZE=<tam>]   ; Permite chamar a va
+                       ri�vel <var> a 
+   21 00000000         ; partir de outro arquivo
+   22 00000000         ;<var> SPACE <tam>                        ; Declara uma 
+                       vari�vel de nome <var>
+   23 00000000         ; de <tam> bytes a partir da primeira 
+   24 00000000         ; posi��o da RAM  
+   25 00000000         
+   26 00000000         ; ------------------------------------------------------
+                       -------------------------
+   27 00000000         ; �rea de C�digo - Tudo abaixo da diretiva a seguir 
+                       ser� armazenado na mem�ria de 
+   28 00000000         ;                  c�digo
+   29 00000000                 AREA             |.text|, CODE, READONLY, ALIGN=
+2
+   30 00000000         
+   31 00000000         ; Se alguma função do arquivo for chamada em outro arq
+                       uivo 
+   32 00000000                 EXPORT           Start       ; Permite chamar a 
+                                                            função Start a pa
+                                                            rtir de 
+   33 00000000         ; outro arquivo. No caso startup.s
+   34 00000000         
+   35 00000000         ; Se chamar alguma função externa 
+   36 00000000         ;IMPORT <func>              ; Permite chamar dentro dest
+                       e arquivo uma 
+   37 00000000         ; função <func>
+   38 00000000                 IMPORT           PLL_Init
+   39 00000000                 IMPORT           SysTick_Init
+   40 00000000                 IMPORT           SysTick_Wait1ms
+   41 00000000                 IMPORT           GPIO_Init
+   42 00000000         
+   43 00000000                 IMPORT           PortJ_Input ; Porta J - SW1 e S
+                                                            W2
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   44 00000000                 IMPORT           PortQ_Output ; Porta Q - Q0:Q3 
+                                                            - Leds e Display 
+   45 00000000                 IMPORT           PortA_Output ; Porta A - A4:Q7 
+                                                            - Leds e Display 
+   46 00000000                 IMPORT           PortB_Output ; Porta B - B4:B5 
+                                                            - Transistor dos di
+                                                            splays
+   47 00000000                 IMPORT           PortP_Output ; Porta P - P5    
+                                                            - Transistor dos le
+                                                            ds
+   48 00000000         
+   49 00000000         ; Mapeamento dos 7 segmentos (0 a 9)
+   50 00000000 3F 06 5B 
+              4F 66 6D 
+              7D 07 7F 
+              6F       MAPEAMENTO_7SEG
+                               DCB              0x3F, 0x06, 0x5B, 0x4F, 0x66, 0
+x6D, 0x7D, 0x07, 0x7F, 0x6F
+   51 0000000A         
+   52 0000000A         ; Mapeamento dos padrões dos leds 
+   53 0000000A 81 42 24 
+              18 18 24 
+              42 81    MAPEAMENTO_LED
+                               DCB              0x81, 0x42, 0x24, 0x18, 0x18, 0
+x24, 0x42, 0x81
+   54 00000012         
+   55 00000012         ; ------------------------------------------------------
+                       -------------------------
+   56 00000012         ; Função main()
+   57 00000012         Start
+   58 00000012 F7FF FFFE       BL               PLL_Init    ;Chama a subrotina 
+                                                            para alterar o cloc
+                                                            k do microcontrolad
+                                                            or para 80MHz
+   59 00000016 F7FF FFFE       BL               SysTick_Init
+   60 0000001A F7FF FFFE       BL               GPIO_Init   ;Chama a subrotina 
+                                                            que inicializa os G
+                                                            PIO
+   61 0000001E         
+   62 0000001E F04F 0300       MOV              R3, #0
+   63 00000022 F04F 0500       MOV              R5, #0      ;Tick do contador
+   64 00000026         
+   65 00000026 F04F 0700       MOV              R7, #0      ;Contador display  
+                                                             -> 0 a 99
+   66 0000002A F04F 0C00       MOV              R12, #0     ;Contador leds   ->
+                                                             0 a 7
+   67 0000002E         
+   68 0000002E F04F 0801       MOV              R8, #1      ;Registrador com o 
+                                                            valor do passo
+   69 00000032 F04F 0901       MOV              R9, #1      ;Registrador com o 
+                                                            sinal do incremento
+                                                             (1 - Crescente, 0 
+                                                            - Decrescente) 
+   70 00000036         
+   71 00000036         MainLoop
+   72 00000036 F000 F856       BL               WriteDS1
+   73 0000003A F000 F874       BL               WriteDS2
+   74 0000003E F000 F892       BL               WriteLED
+   75 00000042         
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+   76 00000042 2D64            CMP              R5, #100
+   77 00000044 BF08            IT               EQ          ;Verifica o tick do
+                                                             contador, atualiza
+                                                             a cada 50  
+   78 00000046 F000 F827       BLEQ             UpdateCounter
+   79 0000004A         
+   80 0000004A 2D64            CMP              R5, #100
+   81 0000004C BF04            ITT              EQ
+   82 0000004E 2500            MOVEQ            R5, #0
+   83 00000050 F000 F841       BLEQ             UpdateLED
+   84 00000054         
+   85 00000054 F105 0501       ADD              R5, #1
+   86 00000058         
+   87 00000058         Check_None
+   88 00000058 F7FF FFFE       BL               PortJ_Input
+   89 0000005C 2803            CMP              R0, #2_00000011 ;Verifica se pe
+                                                            lo menos uma chave 
+                                                            está pressionada
+   90 0000005E D100            BNE              CheckSW1    ;Se o teste viu que
+                                                             tem pelo menos alg
+                                                            uma chave pressiona
+                                                            da pula
+   91 00000060         
+   92 00000060 E7E9            B                MainLoop
+   93 00000062         
+   94 00000062         CheckSW1
+   95 00000062 2802            CMP              R0, #2_00000010 ; Verifica se a
+                                                            penas SW1 está pre
+                                                            ssionada
+   96 00000064 D10A            BNE              CheckSW2    ; Testa SW2
+   97 00000066         
+   98 00000066 F1B8 0F09       CMP              R8, #9
+   99 0000006A BF0C            ITE              EQ
+  100 0000006C F04F 0801       MOVEQ            R8, #1
+  101 00000070 F108 0801       ADDNE            R8, #1
+  102 00000074         
+  103 00000074 F04F 00FA       MOV              R0, #250
+  104 00000078 F7FF FFFE       BL               SysTick_Wait1ms
+  105 0000007C         
+  106 0000007C         CheckSW2
+  107 0000007C 2801            CMP              R0, #2_00000001 ; Verifica se a
+                                                            penas SW2 está pre
+                                                            ssionada
+  108 0000007E D1DA            BNE              MainLoop    ; Se as duas ou nen
+                                                            huma das chaves est
+                                                            á pressionada, 
+  109 00000080         
+  110 00000080 F1B9 0F00       CMP              R9, #0
+  111 00000084 BF0C            ITE              EQ          ; Change flag - inv
+                                                            ert counter increas
+                                                            er signal
+  112 00000086 F04F 0901       MOVEQ            R9, #1      ; Increasing
+  113 0000008A F04F 0900       MOVNE            R9, #0      ; Decreasing
+  114 0000008E         
+  115 0000008E         
+  116 0000008E F04F 0096       MOV              R0, #150
+  117 00000092 F7FF FFFE       BL               SysTick_Wait1ms
+  118 00000096 E7CE            B                MainLoop
+  119 00000098         
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+  120 00000098         UpdateCounter
+  121 00000098 B500            PUSH             {LR}
+  122 0000009A         
+  123 0000009A F1B9 0F01       CMP              R9, #1
+  124 0000009E D003            BEQ              IncreaseCounter
+  125 000000A0 D10D            BNE              DecreaseCounter
+  126 000000A2         
+  127 000000A2 F85D EB04       POP              {LR}
+  128 000000A6 4770            BX               LR
+  129 000000A8         
+  130 000000A8         IncreaseCounter                      ;If units over 9, d
+                                                            ownward reset and i
+                                                            ncrease tens by 1
+  131 000000A8 4447            ADD              R7, R7, R8
+  132 000000AA         
+  133 000000AA 2F63            CMP              R7, #99
+  134 000000AC BF88            IT               HI
+  135 000000AE 2700            MOVHI            R7, #0
+  136 000000B0         
+  137 000000B0 F04F 040A       MOV              R4, #10
+  138 000000B4         
+  139 000000B4 FBB7 F6F4       UDIV             R6, R7, R4
+  140 000000B8 FB06 7414       MLS              R4, R6, R4, R7
+  141 000000BC         
+  142 000000BC 4770            BX               LR
+  143 000000BE         
+  144 000000BE         DecreaseCounter                      ;If units under 0, 
+                                                            upward reset and de
+                                                            crease tens by 1
+  145 000000BE EBA7 0708       SUB              R7, R7, R8
+  146 000000C2         
+  147 000000C2 2F00            CMP              R7, #0
+  148 000000C4 BFB8            IT               LT
+  149 000000C6 2763            MOVLT            R7, #99
+  150 000000C8         
+  151 000000C8 F04F 040A       MOV              R4, #10
+  152 000000CC         
+  153 000000CC FBB7 F6F4       UDIV             R6, R7, R4
+  154 000000D0 FB06 7414       MLS              R4, R6, R4, R7
+  155 000000D4         
+  156 000000D4 4770            BX               LR
+  157 000000D6         
+  158 000000D6         ;-------------------------------------------------------
+                       -------------------------
+  159 000000D6         ; Função UpdateLED
+  160 000000D6         ; Parâmetro de entrada: Não tem
+  161 000000D6         ; Parâmetro de saída: Não tem
+  162 000000D6         UpdateLED
+  163 000000D6 F1BC 0F07       CMP              R12, #7
+  164 000000DA BF0C            ITE              EQ
+  165 000000DC F04F 0C00       MOVEQ            R12, #0
+  166 000000E0 F10C 0C01       ADDNE            R12, #1
+  167 000000E4         
+  168 000000E4 4770            BX               LR
+  169 000000E6         
+  170 000000E6         WriteDS1                             ; Recebe o dígito 
+                                                            das dezenas
+  171 000000E6 B500            PUSH             {LR}        ; Guarda o endereç
+                                                            o de retorno
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  172 000000E8         
+  173 000000E8 F8DF B0BC       LDR              R11, =MAPEAMENTO_7SEG ; Desloca
+                                                             escolhendo o respe
+                                                            ctivo número das d
+                                                            ezenas
+  174 000000EC F81B A006       LDRB             R10, [R11, R6]
+  175 000000F0         
+  176 000000F0 F00A 00F0       AND              R0, R10, #2_11110000 ; Atualiza
+                                                             DSDP:DSE (PA7:PA4)
+                                                            
+  177 000000F4 F7FF FFFE       BL               PortA_Output
+  178 000000F8         
+  179 000000F8 F00A 000F       AND              R0, R10, #2_00001111 ; Atualiza
+                                                             DSD:DSA (PQ3:PQ0)
+  180 000000FC F7FF FFFE       BL               PortQ_Output
+  181 00000100         
+  182 00000100 F04F 0010       MOV              R0, #2_010000 ; Ativa o transis
+                                                            tor do DS1 (PB4)
+  183 00000104 F7FF FFFE       BL               PortB_Output
+  184 00000108         
+  185 00000108 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+  186 0000010C F7FF FFFE       BL               SysTick_Wait1ms
+  187 00000110         
+  188 00000110 F04F 0000       MOV              R0, #2_000000 ; Desativa o tran
+                                                            sistor do DS1 (PB4)
+                                                            
+  189 00000114 F7FF FFFE       BL               PortB_Output
+  190 00000118         
+  191 00000118 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+  192 0000011C F7FF FFFE       BL               SysTick_Wait1ms
+  193 00000120         
+  194 00000120 F85D EB04       POP              {LR}
+  195 00000124 4770            BX               LR          ; Retoma
+  196 00000126         
+  197 00000126         WriteDS2                             ; Recebe o dígito 
+                                                            das unidades
+  198 00000126 B500            PUSH             {LR}        ; Guarda o endereç
+                                                            o de retorno
+  199 00000128         
+  200 00000128 F8DF B07C       LDR              R11, =MAPEAMENTO_7SEG ; Desloca
+                                                             escolhendo o respe
+                                                            ctivo número das u
+                                                            nidades
+  201 0000012C F81B A004       LDRB             R10, [R11, R4]
+  202 00000130         
+  203 00000130 F00A 00F0       AND              R0, R10, #2_11110000 ; Atualiza
+                                                             DSDP:DSE (PA7:PA4)
+                                                            
+  204 00000134 F7FF FFFE       BL               PortA_Output
+  205 00000138         
+  206 00000138 F00A 000F       AND              R0, R10, #2_00001111 ; Atualiza
+                                                             DSD:DSA (PQ3:PQ0)
+  207 0000013C F7FF FFFE       BL               PortQ_Output
+  208 00000140         
+  209 00000140 F04F 0020       MOV              R0, #2_100000 ; Ativa o transis
+                                                            tor do DS2 (PB5)
+  210 00000144 F7FF FFFE       BL               PortB_Output
+  211 00000148         
+  212 00000148 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+  213 0000014C F7FF FFFE       BL               SysTick_Wait1ms
+  214 00000150         
+  215 00000150 F04F 0000       MOV              R0, #2_000000 ; Desativa o tran
+                                                            sistor do DS2 (PB5)
+                                                            
+  216 00000154 F7FF FFFE       BL               PortB_Output
+  217 00000158         
+  218 00000158 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+  219 0000015C F7FF FFFE       BL               SysTick_Wait1ms
+  220 00000160         
+  221 00000160 F85D EB04       POP              {LR}
+  222 00000164 4770            BX               LR          ; Retoma
+  223 00000166         
+  224 00000166         ;-------------------------------------------------------
+                       -------------------------
+  225 00000166         ; Função Pisca_LED
+  226 00000166         ; Parâmetro de entrada: Não tem
+  227 00000166         ; Parâmetro de saída: Não tem
+  228 00000166         WriteLED
+  229 00000166 B500            PUSH             {LR}
+  230 00000168         
+  231 00000168 F8DF B040       LDR              R11, =MAPEAMENTO_LED ; Desloca 
+                                                            escolhendo o respec
+                                                            tivo número das un
+                                                            idades
+  232 0000016C F81B A00C       LDRB             R10, [R11, R12]
+  233 00000170         
+  234 00000170 F00A 00F0       AND              R0, R10, #2_11110000 ; Atualiza
+                                                             DSDP:DSE (PA7:PA4)
+                                                            
+  235 00000174 F7FF FFFE       BL               PortA_Output
+  236 00000178         
+  237 00000178 F00A 000F       AND              R0, R10, #2_00001111 ; Atualiza
+                                                             DSD:DSA (PQ3:PQ0)
+  238 0000017C F7FF FFFE       BL               PortQ_Output
+  239 00000180         
+  240 00000180 F04F 0020       MOV              R0, #2_00100000 ; Ativa o trans
+                                                            istor do DS2 (PP5)
+  241 00000184 F7FF FFFE       BL               PortP_Output
+  242 00000188         
+  243 00000188 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+  244 0000018C F7FF FFFE       BL               SysTick_Wait1ms
+  245 00000190         
+  246 00000190 F04F 0000       MOV              R0, #2_00000000 ; Desativa o tr
+                                                            ansistor do DS2 (PP
+                                                            5)
+  247 00000194 F7FF FFFE       BL               PortP_Output
+  248 00000198         
+  249 00000198 F04F 0001       MOV              R0, #1      ; Atrasa 1ms
+  250 0000019C F7FF FFFE       BL               SysTick_Wait1ms
+  251 000001A0         
+  252 000001A0 F85D EB04       POP              {LR}
+  253 000001A4 4770            BX               LR          ; Retoma
+  254 000001A6         
+  255 000001A6         ; ------------------------------------------------------
+                       --------------------------------------------------------
+                       -----------
+  256 000001A6         ; Fim do Arquivo
+  257 000001A6         ; ------------------------------------------------------
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+                       --------------------------------------------------------
+                       ----------- 
+  258 000001A6 00 00           ALIGN                        ;Garante que o fim 
+                                                            da seção está al
+                                                            inhada 
+  259 000001A8                 END                          ;Fim do arquivo
+              00000000 
+              00000000 
+Command Line: --debug --xref --diag_suppress=9931,A1950W --cpu=Cortex-M4.fp.sp 
+--depend=.\objects\main.d -o.\objects\main.o -IC:\Users\User\AppData\Local\Arm\
+Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C129 --predefine="__EVAL SETA 1" --
+predefine="__UVISION_VERSION SETA 539" --predefine="TM4C1294NCPDT SETA 1" --lis
+t=.\listings\main.lst main.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+DATA 00000000
+
+Symbol: DATA
+   Definitions
+      At line 18 in file main.s
+   Uses
+      None
+Comment: DATA unused
+1 symbol
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 29 in file main.s
+   Uses
+      None
+Comment: .text unused
+CheckSW1 00000062
+
+Symbol: CheckSW1
+   Definitions
+      At line 94 in file main.s
+   Uses
+      At line 90 in file main.s
+Comment: CheckSW1 used once
+CheckSW2 0000007C
+
+Symbol: CheckSW2
+   Definitions
+      At line 106 in file main.s
+   Uses
+      At line 96 in file main.s
+Comment: CheckSW2 used once
+Check_None 00000058
+
+Symbol: Check_None
+   Definitions
+      At line 87 in file main.s
+   Uses
+      None
+Comment: Check_None unused
+DecreaseCounter 000000BE
+
+Symbol: DecreaseCounter
+   Definitions
+      At line 144 in file main.s
+   Uses
+      At line 125 in file main.s
+Comment: DecreaseCounter used once
+IncreaseCounter 000000A8
+
+Symbol: IncreaseCounter
+   Definitions
+      At line 130 in file main.s
+   Uses
+      At line 124 in file main.s
+Comment: IncreaseCounter used once
+MAPEAMENTO_7SEG 00000000
+
+Symbol: MAPEAMENTO_7SEG
+   Definitions
+      At line 50 in file main.s
+   Uses
+      At line 173 in file main.s
+      At line 200 in file main.s
+
+MAPEAMENTO_LED 0000000A
+
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+Relocatable symbols
+
+Symbol: MAPEAMENTO_LED
+   Definitions
+      At line 53 in file main.s
+   Uses
+      At line 231 in file main.s
+Comment: MAPEAMENTO_LED used once
+MainLoop 00000036
+
+Symbol: MainLoop
+   Definitions
+      At line 71 in file main.s
+   Uses
+      At line 92 in file main.s
+      At line 108 in file main.s
+      At line 118 in file main.s
+
+Start 00000012
+
+Symbol: Start
+   Definitions
+      At line 57 in file main.s
+   Uses
+      At line 32 in file main.s
+Comment: Start used once
+UpdateCounter 00000098
+
+Symbol: UpdateCounter
+   Definitions
+      At line 120 in file main.s
+   Uses
+      At line 78 in file main.s
+Comment: UpdateCounter used once
+UpdateLED 000000D6
+
+Symbol: UpdateLED
+   Definitions
+      At line 162 in file main.s
+   Uses
+      At line 83 in file main.s
+Comment: UpdateLED used once
+WriteDS1 000000E6
+
+Symbol: WriteDS1
+   Definitions
+      At line 170 in file main.s
+   Uses
+      At line 72 in file main.s
+Comment: WriteDS1 used once
+WriteDS2 00000126
+
+Symbol: WriteDS2
+   Definitions
+      At line 197 in file main.s
+   Uses
+      At line 73 in file main.s
+Comment: WriteDS2 used once
+WriteLED 00000166
+
+Symbol: WriteLED
+
+
+
+ARM Macro Assembler    Page 3 Alphabetic symbol ordering
+Relocatable symbols
+
+   Definitions
+      At line 228 in file main.s
+   Uses
+      At line 74 in file main.s
+Comment: WriteLED used once
+15 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+GPIO_Init 00000000
+
+Symbol: GPIO_Init
+   Definitions
+      At line 41 in file main.s
+   Uses
+      At line 60 in file main.s
+Comment: GPIO_Init used once
+PLL_Init 00000000
+
+Symbol: PLL_Init
+   Definitions
+      At line 38 in file main.s
+   Uses
+      At line 58 in file main.s
+Comment: PLL_Init used once
+PortA_Output 00000000
+
+Symbol: PortA_Output
+   Definitions
+      At line 45 in file main.s
+   Uses
+      At line 177 in file main.s
+      At line 204 in file main.s
+      At line 235 in file main.s
+
+PortB_Output 00000000
+
+Symbol: PortB_Output
+   Definitions
+      At line 46 in file main.s
+   Uses
+      At line 183 in file main.s
+      At line 189 in file main.s
+      At line 210 in file main.s
+      At line 216 in file main.s
+
+PortJ_Input 00000000
+
+Symbol: PortJ_Input
+   Definitions
+      At line 43 in file main.s
+   Uses
+      At line 88 in file main.s
+Comment: PortJ_Input used once
+PortP_Output 00000000
+
+Symbol: PortP_Output
+   Definitions
+      At line 47 in file main.s
+   Uses
+      At line 241 in file main.s
+      At line 247 in file main.s
+
+PortQ_Output 00000000
+
+Symbol: PortQ_Output
+   Definitions
+      At line 44 in file main.s
+
+
+
+ARM Macro Assembler    Page 2 Alphabetic symbol ordering
+External symbols
+
+   Uses
+      At line 180 in file main.s
+      At line 207 in file main.s
+      At line 238 in file main.s
+
+SysTick_Init 00000000
+
+Symbol: SysTick_Init
+   Definitions
+      At line 39 in file main.s
+   Uses
+      At line 59 in file main.s
+Comment: SysTick_Init used once
+SysTick_Wait1ms 00000000
+
+Symbol: SysTick_Wait1ms
+   Definitions
+      At line 40 in file main.s
+   Uses
+      At line 104 in file main.s
+      At line 117 in file main.s
+      At line 186 in file main.s
+      At line 192 in file main.s
+      At line 213 in file main.s
+      At line 219 in file main.s
+      At line 244 in file main.s
+      At line 250 in file main.s
+
+9 symbols
+361 symbols in table
